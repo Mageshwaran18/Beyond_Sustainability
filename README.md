@@ -1,8 +1,7 @@
-# React + Vite
+# Beyond_Sustainability
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hi , We have another meeting scheduled at next Thursday.Before that ,
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* React front end shouold be added with the connectivity with Express.js as backend 
+* An LLM (ChatGPT) should be created to generate the output 
+* We have time constraint upto 2.8.24 before that we should complete the project and also to complete the Testing by combining with the main module 
