@@ -1,15 +1,32 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const Form = () => {
-  const [facilityCode, setFacilityCode] = useState('');
-  const [equipment, setEquipment] = useState('');
-  const [fuelConsumption, setFuelConsumption] = useState('');
-  const [carbonEmissions, setCarbonEmissions] = useState('');
+  const [formData, setFormData] = useState({
+    facilityCode: '',
+    equipment: '',
+    fuelConsumption: '',
+    carbonEmissions: ''
+  });
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log({ facilityCode, equipment, fuelConsumption, carbonEmissions });
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/facilities', formData);
+      console.log('Data submitted successfully:', response.data);
+      alert('Data submitted successfully!');
+    } catch (error) {
+      console.error('There was an error submitting the form!', error);
+    }
   };
 
   return (
@@ -22,8 +39,9 @@ const Form = () => {
             <input
               type="text"
               id="facilityCode"
-              value={facilityCode}
-              onChange={(e) => setFacilityCode(e.target.value)}
+              name="facilityCode"
+              value={formData.facilityCode}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -32,8 +50,9 @@ const Form = () => {
             <input
               type="text"
               id="equipment"
-              value={equipment}
-              onChange={(e) => setEquipment(e.target.value)}
+              name="equipment"
+              value={formData.equipment}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -42,8 +61,9 @@ const Form = () => {
             <input
               type="text"
               id="fuelConsumption"
-              value={fuelConsumption}
-              onChange={(e) => setFuelConsumption(e.target.value)}
+              name="fuelConsumption"
+              value={formData.fuelConsumption}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -52,13 +72,16 @@ const Form = () => {
             <input
               type="text"
               id="carbonEmissions"
-              value={carbonEmissions}
-              onChange={(e) => setCarbonEmissions(e.target.value)}
+              name="carbonEmissions"
+              value={formData.carbonEmissions}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="text-center">
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Submit</button>
+            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+              Submit
+            </button>
           </div>
         </form>
       </div>
