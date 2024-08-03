@@ -51,12 +51,6 @@ function cleanAndFormatText(text) {
 
     lines.forEach(line => {
         line = line.trim();
-        if (line.startsWith('1. Energy Efficiency Upgrade:') || line.startsWith('2. Alternative Refrigerants:')) {
-            skipSection = true;
-        } else if (skipSection && (line.startsWith('1.') || line.startsWith('2.'))) {
-            skipSection = false;
-        }
-
         if (!skipSection && line && !seen.has(line)) {
             result.push(line);
             seen.add(line);
@@ -125,8 +119,6 @@ app.post('/mitigation-strategies', async (req, res) => {
     const response = await getResponse(mitigationPrompt);
     const cleanedResponseArray = cleanAndFormatText(response);
 
-    console.log("Mitigation Response:", cleanedResponseArray);
-
     const segments = [
         'Water Purification', 'Sanitary Pads', 'Planting', 'Bio Fuel', 'Data Analytics', 
         'Electric Tractor', 'Waste Management', 'Energy Production', 'Battery', 'Organic Waste', 
@@ -170,7 +162,6 @@ Mapping
 
     const ans = await getResponse(mappingPrompt);
     const map = cleanAndFormatText(ans);
-    console.log("Mapping Response:", map);
     const final = mapMitigationStrategies(cleanedResponseArray, map);
     res.send(final);
 });
