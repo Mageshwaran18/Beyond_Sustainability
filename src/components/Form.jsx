@@ -26,7 +26,7 @@ const Form = () => {
       const response = await axios.post('http://localhost:3000/mitigation-strategies', formData);
       console.log('Data submitted successfully:', response.data);
       setOutput(response.data);
-      alert('Data submitted successfully!');
+     
     } catch (error) {
       console.error('There was an error submitting the form!', error);
     }
