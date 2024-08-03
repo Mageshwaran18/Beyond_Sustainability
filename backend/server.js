@@ -54,7 +54,7 @@ function createMitigationPrompt(data) {
   const equipment = data['Equipment'];
   const equipmentConsumption = data['Equipment consumption'];
   const equipmentEmission = data['Equipment Emission'];
-
+    console.log(equipment,equipmentConsumption,equipmentEmission);
   const prompt = `Provide mitigation strategies for the reduction of ${equipmentEmission} CO2 emission from the ${equipment} with the fuel consumption of ${equipmentConsumption} units of fuel.`;
 
   return prompt;
@@ -63,6 +63,7 @@ function createMitigationPrompt(data) {
 app.post('/mitigation-strategies', async (req, res) => {
   const data = req.body;
   const mitigationPrompt = createMitigationPrompt(data);
+  console.log(mitigationPrompt);
   const response = await getResponse(mitigationPrompt);
   console.log("Response:", response);
   res.send(response);
