@@ -10,6 +10,10 @@ app.use(bodyParser.json());
 
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+if (!process.env.GOOGLE_API_KEY) {
+    console.error("Please set the GOOGLE_API_KEY environment variable.");
+    process.exit(1);
+}
 
 const generationConfig = {
     stopSequences: ["red"],
@@ -79,19 +83,24 @@ function mapMitigationStrategies(mitigationResponse, mappingResponse) {
         const [strategy, description] = mitigation.split(': ');
         const segments = mappingMap.get(strategy);
         if (segments) {
-            output.push(
-                `Mitigation Strategies: ${strategy}\nsegment: ${segments}\n          -- ${mitigation}`
-            );
+            output.push({
+                "Mitigation Strategy": strategy,
+                "Segments": segments,
+                [strategy]: description  // Use strategy name as the key and description as value
+            });
         }
     });
 
-    return output.join('\n\n');
+    return output;
 }
+
+
 
 function createMitigationPrompt(data) {
     const equipment = data['Equipment'];
     const equipmentConsumption = data['Equipment consumption'];
     const equipmentEmission = data['Equipment Emission'];
+    // console.log('Received data:', data);
 
     return `
     Provide a detailed and structured mitigation strategy based on the CO2 emission from the ${equipment} with the fuel consumption of ${equipmentConsumption} units of fuel.
@@ -115,6 +124,7 @@ function createMitigationPrompt(data) {
 
 app.post('/mitigation-strategies', async (req, res) => {
     const data = req.body;
+   
     const mitigationPrompt = createMitigationPrompt(data);
     const response = await getResponse(mitigationPrompt);
     const cleanedResponseArray = cleanAndFormatText(response);
@@ -162,8 +172,10 @@ Mapping
 
     const ans = await getResponse(mappingPrompt);
     const map = cleanAndFormatText(ans);
+    console.log('Mapping:', map);
     const final = mapMitigationStrategies(cleanedResponseArray, map);
-    res.send(final);
+  
+    res.json(final);
 });
 
 // Start the server
