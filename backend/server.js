@@ -1,20 +1,26 @@
+// Import necessary modules
 const { GoogleGenerativeAI, GoogleGenerativeAIResponseError } = require("@google/generative-ai");
 const dotenv = require("dotenv");
 const bodyParser = require('body-parser');
 const express = require('express');
 const cors = require('cors');
 
+// Initialize the express app and set up middleware
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+app.use(cors()); // Enable CORS for cross-origin requests
+app.use(bodyParser.json()); // Parse JSON request bodies
 
+// Load environment variables from .env file
 dotenv.config();
+
+// Initialize Google Generative AI client with API key from environment variables
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 if (!process.env.GOOGLE_API_KEY) {
     console.error("Please set the GOOGLE_API_KEY environment variable.");
-    process.exit(1);
+    process.exit(1); // Exit if the API key is not set
 }
 
+// Configuration for text generation
 const generationConfig = {
     stopSequences: ["red"],
     maxOutputTokens: 50, // Adjust as needed
@@ -23,6 +29,7 @@ const generationConfig = {
     topK: 16,
 };
 
+// Function to get AI response based on the provided prompt
 async function getResponse(prompt) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     try {
@@ -46,9 +53,10 @@ async function getResponse(prompt) {
     }
 }
 
+// Function to clean and format the text response
 function cleanAndFormatText(text) {
-    text = text.replace(/\*/g, '').trim();
-    const lines = text.split('\n');
+    text = text.replace(/\*/g, '').trim(); // Remove asterisks and trim whitespace
+    const lines = text.split('\n'); // Split text into lines
     const seen = new Set();
     let result = [];
     let skipSection = false;
@@ -56,47 +64,49 @@ function cleanAndFormatText(text) {
     lines.forEach(line => {
         line = line.trim();
         if (!skipSection && line && !seen.has(line)) {
-            result.push(line);
-            seen.add(line);
+            result.push(line); // Add unique lines to result
+            seen.add(line); // Mark line as seen
         }
     });
 
     return result;
 }
 
+// Function to parse mitigation strategies from cleaned text response
 function parseMitigationStrategies(input) {
     const strategies = [];
     const strategyDescriptions = input.slice(1, 11);
     const mappings = input.slice(12);
   
     for (let i = 0; i < strategyDescriptions.length; i++) {
-      const strategyParts = strategyDescriptions[i].split(': ');
-      const strategyNumber = strategyParts[0].split('. ')[0];
-      const strategyName = strategyParts[0].split('. ')[1];
-      const strategyDescription = strategyParts[1];
+        const strategyParts = strategyDescriptions[i].split(': ');
+        const strategyNumber = strategyParts[0].split('. ')[0];
+        const strategyName = strategyParts[0].split('. ')[1];
+        const strategyDescription = strategyParts[1];
       
-      // Ensure that the mapping exists before trying to split it
-      if (mappings[i]) {
-        const mappingParts = mappings[i].split(': ');
-        const segments = mappingParts[1];
-  
-        strategies.push({
-          "Mitigation Strategy": strategyName,
-          "Segments": segments,
-          [strategyName]: strategyDescription
-        });
-      } else {
-        strategies.push({
-          "Mitigation Strategy": strategyName,
-          "Segments": '',
-          [strategyName]: strategyDescription
-        });
-      }
+        // Ensure that the mapping exists before trying to split it
+        if (mappings[i]) {
+            const mappingParts = mappings[i].split(': ');
+            const segments = mappingParts[1];
+    
+            strategies.push({
+                "Mitigation Strategy": strategyName,
+                "Segments": segments,
+                [strategyName]: strategyDescription
+            });
+        } else {
+            strategies.push({
+                "Mitigation Strategy": strategyName,
+                "Segments": '',
+                [strategyName]: strategyDescription
+            });
+        }
     }
   
     return strategies;
-  }
+}
 
+// Function to create a prompt for mitigation strategies based on provided data
 function createMitigationPrompt(data) {
     const equipment = data['Equipment'];
     const equipmentConsumption = data['Equipment consumption'];
@@ -118,15 +128,15 @@ function createMitigationPrompt(data) {
     8. Public Transportation: Promote the use of public transportation as a viable alternative for commuters.
     9. Cycling and Walking: Encourage walking or cycling for short distances to reduce reliance on vehicles.
     10. Carbon Offsetting: Invest in carbon offsetting programs to compensate for unavoidable emissions.
-    The response should be in a similar format(must contain topics and mitigation strategies) and apply to ${equipment} with ${equipmentConsumption} units of fuel.
+    The response should be in a similar format (must contain topics and mitigation strategies) and apply to ${equipment} with ${equipmentConsumption} units of fuel.
     
-    Map the Mitigation strategies points to the most relevant segments from the  below list.
+    Map the Mitigation strategies points to the most relevant segments from the below list.
     ['Water Purification', 'Sanitary Pads', 'Planting', 'Bio Fuel', 'Data Analytics', 
         'Electric Tractor', 'Waste Management', 'Energy Production', 'Battery', 'Organic Waste', 
         'Waste Segregation', 'Meat', 'Furniture', 'Rubber', 'Air Freshner', 'Forest', 
         'Cloth', 'Wind Energy', 'Air Pollution', 'Rainwater Harvesting', 'Solid Waste', 
         'Household Products', 'Electric Bus', 'Heat Recovery', 'Air Purification', 'BioGas', 
-        'Building Materials', 'Water Management', 'Fashion', 'Steel Wate Management', 'Leather', 
+        'Building Materials', 'Water Management', 'Fashion', 'Steel Waste Management', 'Leather', 
         'Energy Storage', 'Toilet', 'Soilless Farming', 'Sewage', 'Food', 'Packaging', 
         'Sanitation', 'Electric Car', 'Electric Truck', 'Paper Waste Management', 
         'Electric Cycle', 'Material', 'Cosmetics', 'Green Chemical', 'Plant Meat', 'AC', 
@@ -135,30 +145,18 @@ function createMitigationPrompt(data) {
         'Banana Fibre', 'Renewable Water', 'Carbon Fibre', 'Electric Auto', 'Testing', 
         'Plastic Free', 'Energy Efficiency', 'EV Charging Station', 'Organic Food', 'Bamboo', 
         'Recycling Waste', 'Wood', 'Fuel Efficiency', 'EV', 'Electric Bike', 'Purification']
-    
-    Provide the segment for each point in the example format of:
-    Mapping
-    1. Fuel Efficiency Improvements: Fuel Efficiency, Energy Efficiency, EV, Electric Car, Electric Auto
-    2. Vehicle Maintenance: Fuel Efficiency, Energy Efficiency
-    3. Driving Practices: Fuel Efficiency, Energy Efficiency
-    4. Alternative Fuels: Bio Fuel, GreenGas
-    5. Vehicle Downsizing: Fuel Efficiency, Energy Efficiency
-    6. Route Optimization: Fuel Efficiency, Energy Efficiency
-    7. Vehicle Sharing: Fuel Efficiency, Energy Efficiency
-    8. Public Transportation: Electric Bus, Electric Bike, Electric Cycle
-    9. Cycling and Walking: Electric Bike, Electric Cycle
-    10. Carbon Offsetting: Carbon Emission, Renewable Water, Carbon Fibre
     `;
 }
 
+// Endpoint to handle POST requests for mitigation strategies
 app.post('/mitigation-strategies', async (req, res) => {
-    const data = req.body;
-    const mitigationPrompt = createMitigationPrompt(data);
-    const response = await getResponse(mitigationPrompt);
-    const cleanedResponseArray = cleanAndFormatText(response);
-    const final = parseMitigationStrategies(cleanedResponseArray);
-    console.log(final);
-    res.json(final);
+    const data = req.body; // Extract data from request body
+    const mitigationPrompt = createMitigationPrompt(data); // Create prompt based on data
+    const response = await getResponse(mitigationPrompt); // Get AI response
+    const cleanedResponseArray = cleanAndFormatText(response); // Clean and format the response
+    const final = parseMitigationStrategies(cleanedResponseArray); // Parse the cleaned response
+    console.log(final); // Log the final parsed strategies
+    res.json(final); // Send the parsed strategies as JSON response
 });
 
 // Start the server
